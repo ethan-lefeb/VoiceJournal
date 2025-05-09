@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity() {
         }.values.toSet()
     }
 
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.layout)
@@ -69,6 +71,13 @@ class MainActivity : AppCompatActivity() {
         tagsTextView = findViewById(R.id.tagsTextView)
 
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+
+        val menuButton = findViewById<Button>(R.id.menuButton)
+        menuButton.setOnClickListener {
+            val intent = Intent(this, noteLogActivity::class.java)
+            startActivity(intent)
+        }
+
 
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             statusTextView.text = "Speech recognition not available."
@@ -289,6 +298,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+
 
     override fun onPause() {
         super.onPause()
