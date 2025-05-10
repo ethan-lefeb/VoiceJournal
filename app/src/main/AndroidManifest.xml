@@ -15,9 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VoiceJournal"
         tools:targetApi="31">
-        <activity
-            android:name=".noteLogActivity"
-            android:exported="false" />
+        <activity android:name=".NoteLogActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

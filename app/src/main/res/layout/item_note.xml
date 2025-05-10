@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp"
-    android:background="#EEEEEE"
-    android:layout_marginBottom="8dp">
+    android:padding="12dp">
 
     <TextView
-        android:id="@+id/noteDateTextView"
+        android:id="@+id/noteDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Date: 2025-05-09"
-        android:textStyle="bold"/>
+        android:text="Date Placeholder"
+        android:textStyle="bold"
+        android:textSize="16sp"/>
 
     <TextView
-        android:id="@+id/noteTagTextView"
+        android:id="@+id/noteTag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Tag: Placeholder"
+        android:text="Tag Placeholder"
+        android:textSize="14sp"
         android:layout_marginTop="4dp"/>
 </LinearLayout>

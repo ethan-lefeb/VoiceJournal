@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
 
         val menuButton = findViewById<Button>(R.id.menuButton)
         menuButton.setOnClickListener {
-            val intent = Intent(this, noteLogActivity::class.java)
+            val intent = Intent(this, NoteLogActivity::class.java)
             startActivity(intent)
         }
 
