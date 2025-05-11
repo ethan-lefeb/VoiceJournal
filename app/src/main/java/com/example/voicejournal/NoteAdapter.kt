@@ -22,9 +22,18 @@ class NoteAdapter(private val notes: List<VoiceNote>) :
 
     override fun onBindViewHolder(holder: NoteViewHolder, position: Int) {
         val note = notes[position]
-        holder.dateView.text = note.date
-        holder.tagView.text = "Tag: ${note.tag}"
+
+        val date = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+            .format(java.util.Date(note.timestamp))
+        holder.dateView.text = date
+
+        holder.tagView.text = if (note.tags.isNotEmpty()) {
+            "Tag: ${note.tags[0]}"
+        } else {
+            "Tag: None"
+        }
     }
+
 
     override fun getItemCount() = notes.size
 }

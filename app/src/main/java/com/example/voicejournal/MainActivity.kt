@@ -278,7 +278,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveJournalEntry(text: String, tags: Set<String>) {
-        val voiceNote = VoiceNote(text, tags)
+        val voiceNote = VoiceNote(text, tags.toList(), System.currentTimeMillis())
         val file = File(filesDir, journalFileName)
 
         val existingNotes: MutableList<VoiceNote> = if (file.exists()) {
