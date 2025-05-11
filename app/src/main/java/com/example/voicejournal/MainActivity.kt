@@ -21,6 +21,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.util.Locale
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -45,6 +48,9 @@ class MainActivity : AppCompatActivity() {
         private const val BUTTON_DEBOUNCE_DELAY = 500L
         private const val LONG_DELAY_BEFORE_LISTENING = 1000L
     }
+
+    private val gson = Gson()
+    private val journalFileName = "journal_entries.json"
 
     private val keywordMap = mapOf(
         "note to self" to "Personal",
@@ -272,8 +278,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveJournalEntry(text: String, tags: Set<String>) {
-        Log.d(TAG, "Saving journal entry: $text with tags: $tags")
-        // TODO: Actually save it to a file, database, or cloud
+        val voiceNote = VoiceNote(text, tags)
+        val file = File(filesDir, journalFileName)
+
+        val existingNotes: MutableList<VoiceNote> = if (file.exists()) {
+            try {
+                val type = object : TypeToken<MutableList<VoiceNote>>() {}.type
+                gson.fromJson(file.readText(), type) ?: mutableListOf()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to read existing journal entries: ${e.message}")
+                mutableListOf()
+            }
+        } else {
+            mutableListOf()
+        }
+
+        existingNotes.add(voiceNote)
+
+        try {
+            file.writeText(gson.toJson(existingNotes))
+            Log.d(TAG, "Journal entry saved.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save journal entry: ${e.message}")
+        }
     }
 
     private fun checkAndRequestPermission() {
