@@ -100,6 +100,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val fakeNoteButton = findViewById<Button>(R.id.fakeNoteButton)
+        fakeNoteButton.setOnClickListener {
+            val fakeText = "Note to self: check Phineas' schedule and meet the deadline"
+            val fakeTags = detectTags(fakeText)
+            transcriptionTextView.text = fakeText
+            tagsTextView.text = if (fakeTags.isEmpty()) "Tags: None" else "Tags: ${fakeTags.joinToString(", ")}"
+            statusTextView.text = "Fake note created."
+            saveJournalEntry(fakeText, fakeTags)
+        }
+
         checkAndRequestPermission()
     }
 

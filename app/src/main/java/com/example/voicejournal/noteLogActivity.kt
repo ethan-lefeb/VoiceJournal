@@ -7,6 +7,7 @@ import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.io.File
 
 class NoteLogActivity : AppCompatActivity() {
 
@@ -32,13 +33,13 @@ class NoteLogActivity : AppCompatActivity() {
     }
 
     private fun loadNotes(): List<VoiceNote> {
-        val prefs = getSharedPreferences(sharedPrefsName, Context.MODE_PRIVATE)
-        val json = prefs.getString(notesKey, null)
-        return if (json != null) {
+        val file = File(filesDir, "journal_entries.json")
+        if (file.exists()) {
+            val json = file.readText()
             val type = object : TypeToken<List<VoiceNote>>() {}.type
-            gson.fromJson(json, type)
-        } else {
-            emptyList()
+            return gson.fromJson(json, type)
         }
+        return emptyList()
     }
 }
+
