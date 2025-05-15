@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private var isListening = false
     private var isButtonClickable = true
     private var lastTranscription: String = ""
+    private var lastPartial: String = ""
     private val handler = Handler(Looper.getMainLooper())
 
     companion object {
@@ -263,6 +264,12 @@ class MainActivity : AppCompatActivity() {
             override fun onResults(results: Bundle) {
                 val matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val transcript = matches?.joinToString(" ") ?: ""
+
+                if (transcript == lastPartial) {
+                    Log.d(TAG, "Skipping save: final result same as partial")
+                    return
+                }
+
                 lastTranscription = transcript
                 transcriptionTextView.text = transcript
 
@@ -279,6 +286,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPartialResults(partials: Bundle) {
                 partials.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let {
+                    lastPartial = it
                     transcriptionTextView.text = it
                 }
             }
