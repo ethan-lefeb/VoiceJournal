@@ -165,6 +165,7 @@ class MainActivity : AppCompatActivity() {
     private fun startListening() {
         if (isListening) return
 
+        lastPartial = ""
         prepareRecognizer()
 
         handler.postDelayed({
