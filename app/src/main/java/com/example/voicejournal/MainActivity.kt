@@ -197,6 +197,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun confirmSaveDialog(transcript: String, tags: Set<String>) {
+        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        builder.setTitle("Save Note?")
+        builder.setMessage("Do you want to save this note?\n\n\"$transcript\"")
+
+        builder.setPositiveButton("Yes") { _, _ ->
+            saveJournalEntry(transcript, tags)
+            Toast.makeText(this, "Note saved.", Toast.LENGTH_SHORT).show()
+        }
+
+        builder.setNegativeButton("No") { _, _ ->
+            Toast.makeText(this, "Note discarded.", Toast.LENGTH_SHORT).show()
+        }
+
+        builder.setCancelable(true)
+        builder.show()
+    }
+
     private fun debounceButton() {
         isButtonClickable = false
         handler.postDelayed({ isButtonClickable = true }, BUTTON_DEBOUNCE_DELAY)
@@ -282,7 +300,8 @@ class MainActivity : AppCompatActivity() {
                 recordButton.text = "Start Listening"
                 releaseAudioFocus()
 
-                saveJournalEntry(transcript, tags)
+                //saveJournalEntry(transcript, tags)
+                confirmSaveDialog(transcript, tags)
             }
 
             override fun onPartialResults(partials: Bundle) {
