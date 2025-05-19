@@ -1,6 +1,7 @@
 package com.example.voicejournal
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
@@ -24,6 +25,7 @@ import java.util.Locale
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
+import com.example.voicejournal.TagUtils
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,12 +55,7 @@ class MainActivity : AppCompatActivity() {
     private val gson = Gson()
     private val journalFileName = "journal_entries.json"
 
-    private val keywordMap = mapOf(
-        "note to self" to "Personal",
-        "schedule" to "Schedule",
-        "deadline" to "Deadline",
-        "phineas" to "Cats",
-    )
+    private lateinit var keywordMap: MutableMap<String, String>
 
     private fun detectTags(text: String): Set<String> {
         return keywordMap.filter { (phrase, _) ->
@@ -72,10 +69,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.layout)
 
+
         statusTextView = findViewById(R.id.statusTextView)
         recordButton = findViewById(R.id.recordButton)
         transcriptionTextView = findViewById(R.id.transcriptionTextView)
         tagsTextView = findViewById(R.id.tagsTextView)
+
+        val tags = TagUtils.getCustomTags(this).toMutableSet()
 
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
 
@@ -101,6 +101,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val manageTagsButton: Button = findViewById(R.id.manageTags)
+        manageTagsButton.setOnClickListener {
+            val intent = Intent(this, TagManagerActivity::class.java)
+            startActivity(intent)
+        }
+
         val fakeNoteButton = findViewById<Button>(R.id.fakeNoteButton)
         fakeNoteButton.setOnClickListener {
             val fakeText = "Note to self: check Phineas' schedule and meet the deadline"
@@ -113,6 +119,9 @@ class MainActivity : AppCompatActivity() {
 
         checkAndRequestPermission()
     }
+
+
+
 
     private fun setupRecognitionIntent() {
         recognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
