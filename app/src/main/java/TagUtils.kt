@@ -27,7 +27,12 @@ object TagUtils {
         getSharedPreferences(context).edit().putStringSet(TAG_MAP_KEY, tags).apply()
     }
 
-    fun getAllTags(context: Context): Set<String> {
-        return defaultKeywordMap.values.toSet() + getCustomTags(context)
+    fun getKeywordMap(context: Context): Map<String, String> {
+        val tags = getCustomTags(context)
+        return tags.associateWith { it }  // Keyword → Tag
+
+        fun getAllTags(context: Context): Set<String> {
+            return defaultKeywordMap.values.toSet() + getCustomTags(context)
+        }
     }
 }

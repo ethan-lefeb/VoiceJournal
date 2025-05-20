@@ -76,6 +76,7 @@ class MainActivity : AppCompatActivity() {
         tagsTextView = findViewById(R.id.tagsTextView)
 
         val tags = TagUtils.getCustomTags(this).toMutableSet()
+        keywordMap = tags.associateWith { it }.toMutableMap()
 
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
 
@@ -322,6 +323,12 @@ class MainActivity : AppCompatActivity() {
 
             override fun onEvent(eventType: Int, params: Bundle) {}
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val updatedTags = TagUtils.getCustomTags(this)
+        val keywordMap = TagUtils.getKeywordMap(this)
     }
 
     private fun saveJournalEntry(text: String, tags: Set<String>) {
