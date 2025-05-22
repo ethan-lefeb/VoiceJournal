@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tagsTextView: TextView
 
     private var speechRecognizer: SpeechRecognizer? = null
+    private var recognitionListener: RecognitionListener? = null
     private lateinit var recognizerIntent: Intent
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -139,8 +140,12 @@ class MainActivity : AppCompatActivity() {
 
         handler.postDelayed({
             try {
+                if (recognitionListener == null) {
+                    recognitionListener = createRecognitionListener()
+                }
+
                 speechRecognizer = SpeechRecognizer.createSpeechRecognizer(applicationContext).apply {
-                    setRecognitionListener(createRecognitionListener())
+                    setRecognitionListener(recognitionListener)
                 }
                 statusTextView.text = "Ready"
                 Log.d(TAG, "Speech recognizer created")
@@ -158,6 +163,7 @@ class MainActivity : AppCompatActivity() {
                 it.cancel()
                 it.destroy()
                 speechRecognizer = null
+                Log.d(TAG, "Speech recognizer cleaned up")
             } catch (e: Exception) {
                 Log.e(TAG, "Error cleaning up recognizer: ${e.message}")
             }
@@ -176,7 +182,12 @@ class MainActivity : AppCompatActivity() {
         if (isListening) return
 
         lastPartial = ""
-        prepareRecognizer()
+        transcriptionTextView.text = ""
+        tagsTextView.text = "Tags: None"
+
+        if (speechRecognizer == null) {
+            prepareRecognizer()
+        }
 
         handler.postDelayed({
             try {
@@ -197,6 +208,7 @@ class MainActivity : AppCompatActivity() {
 
         try {
             speechRecognizer?.stopListening()
+            Log.d(TAG, "Stopped listening")
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping listening: ${e.message}")
         } finally {
@@ -292,10 +304,22 @@ class MainActivity : AppCompatActivity() {
 
             override fun onResults(results: Bundle) {
                 val matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val transcript = matches?.joinToString(" ") ?: ""
+                val transcript = matches?.firstOrNull() ?: ""
+
+                Log.d(TAG, "All matches: $matches")
+                Log.d(TAG, "Selected transcript: '$transcript'")
 
                 if (transcript == lastPartial) {
                     Log.d(TAG, "Skipping save: final result same as partial")
+                    return
+                }
+
+                if (transcript.isEmpty()) {
+                    Log.d(TAG, "Skipping: empty transcript")
+                    statusTextView.text = "No speech detected"
+                    isListening = false
+                    recordButton.text = "Start Listening"
+                    releaseAudioFocus()
                     return
                 }
 
@@ -310,25 +334,20 @@ class MainActivity : AppCompatActivity() {
                 recordButton.text = "Start Listening"
                 releaseAudioFocus()
 
-                //saveJournalEntry(transcript, tags)
                 confirmSaveDialog(transcript, tags)
             }
 
             override fun onPartialResults(partials: Bundle) {
-                partials.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let {
-                    lastPartial = it
-                    transcriptionTextView.text = it
+                partials.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let { partial ->
+                    if (partial.isNotEmpty() && partial != lastPartial) {
+                        lastPartial = partial
+                        transcriptionTextView.text = partial
+                    }
                 }
             }
 
             override fun onEvent(eventType: Int, params: Bundle) {}
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val updatedTags = TagUtils.getCustomTags(this)
-        val keywordMap = TagUtils.getKeywordMap(this)
     }
 
     private fun saveJournalEntry(text: String, tags: Set<String>) {
@@ -393,5 +412,12 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacksAndMessages(null)
         releaseAudioFocus()
         cleanupRecognizer()
+        recognitionListener = null
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val updatedTags = TagUtils.getCustomTags(this)
+        keywordMap = updatedTags.associateWith { it }.toMutableMap()
     }
 }
