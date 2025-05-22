@@ -27,6 +27,7 @@ import com.google.gson.reflect.TypeToken
 import java.io.File
 import com.example.voicejournal.TagUtils
 
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var statusTextView: TextView
