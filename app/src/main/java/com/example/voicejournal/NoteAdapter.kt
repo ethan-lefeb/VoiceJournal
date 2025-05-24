@@ -6,8 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 
-class NoteAdapter(private val notes: List<VoiceNote>) :
-    RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
+    class NoteAdapter(
+    private val notes: MutableList<VoiceNote>,
+    private val onLongPress: (VoiceNote, Int) -> Unit
+) : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
 
     class NoteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val dateView: TextView = itemView.findViewById(R.id.noteDate)
@@ -32,8 +34,13 @@ class NoteAdapter(private val notes: List<VoiceNote>) :
         } else {
             "Tag: None"
         }
-    }
 
+        holder.itemView.setOnLongClickListener {
+            onLongPress(note, position)
+            true
+        }
+    }
 
     override fun getItemCount() = notes.size
 }
+
