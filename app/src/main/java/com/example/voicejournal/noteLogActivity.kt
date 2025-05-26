@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.Toast
+import android.widget.Button
+import com.google.android.material.datepicker.MaterialDatePicker
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -35,6 +37,26 @@ class NoteLogActivity : AppCompatActivity() {
             showDeleteDialog(position)
             true
         }
+
+        val calendarButton: Button = findViewById(R.id.calendarButton)
+        val clearFilterButton: Button = findViewById(R.id.clearFilterButton)
+
+        calendarButton.setOnClickListener {
+            val datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Select a date")
+                .build()
+
+            datePicker.show(supportFragmentManager, "DATE_PICKER")
+
+            datePicker.addOnPositiveButtonClickListener { selectedDateMillis ->
+                val filteredNotes = filterNotesByDate(notes, selectedDateMillis)
+                updateListView(filteredNotes)
+            }
+        }
+
+        clearFilterButton.setOnClickListener {
+            updateListView(notes)
+        }
     }
 
     private fun loadNotes(): List<VoiceNote> {
@@ -45,6 +67,28 @@ class NoteLogActivity : AppCompatActivity() {
             return gson.fromJson(json, type)
         }
         return emptyList()
+    }
+
+    private fun filterNotesByDate(notes: List<VoiceNote>, selectedDate: Long): List<VoiceNote> {
+        val calendar = java.util.Calendar.getInstance().apply {
+            timeInMillis = selectedDate
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val startOfDay = calendar.timeInMillis
+        val endOfDay = startOfDay + 86_400_000 // Add 1 day in milliseconds
+
+        return notes.filter {
+            it.timestamp in startOfDay..endOfDay
+        }
+    }
+
+    private fun updateListView(filteredNotes: List<VoiceNote>) {
+        adapter.clear()
+        adapter.addAll(filteredNotes.map { formatNote(it) })
+        adapter.notifyDataSetChanged()
     }
 
     private fun saveNotes() {
@@ -72,8 +116,6 @@ class NoteLogActivity : AppCompatActivity() {
     }
 
     private fun refreshListView() {
-        adapter.clear()
-        adapter.addAll(notes.map { formatNote(it) })
-        adapter.notifyDataSetChanged()
+        updateListView(notes)
     }
 }

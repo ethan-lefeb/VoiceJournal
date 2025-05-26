@@ -6,47 +6,62 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <Button
-        android:id="@+id/manageTags"
-        android:layout_width="64dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tags" />
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="8dp">
 
-    <Button
-        android:id="@+id/menuButton"
-        android:layout_width="64dp"
-        android:layout_height="wrap_content"
-        android:text="Log" />
+        <Button
+            android:id="@+id/manageTags"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Tags" />
+
+        <Button
+            android:id="@+id/menuButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Log" />
+
+        <Button
+            android:id="@+id/calendarButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Calendar" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/statusTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="32dp"
         android:text="Press button to start recording"
         android:textSize="18sp" />
 
     <Button
         android:id="@+id/recordButton"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         android:text="Start Recording" />
 
     <Button
         android:id="@+id/fakeNoteButton"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="Create Fake Note" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="32dp">
+        android:layout_marginTop="16dp">
 
         <TextView
             android:id="@+id/transcriptionTextView"
@@ -57,14 +72,12 @@
             android:textSize="16sp" />
     </ScrollView>
 
-    <!-- New tags TextView -->
     <TextView
         android:id="@+id/tagsTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:text="Tags: None"
         android:textSize="14sp"
-        android:textStyle="italic" />
-
+        android:textStyle="italic"
+        android:layout_marginTop="8dp"/>
 </LinearLayout>

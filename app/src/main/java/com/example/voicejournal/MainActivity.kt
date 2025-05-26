@@ -77,6 +77,8 @@ class MainActivity : AppCompatActivity() {
         transcriptionTextView = findViewById(R.id.transcriptionTextView)
         tagsTextView = findViewById(R.id.tagsTextView)
 
+        val calendarButton = findViewById<Button>(R.id.calendarButton)
+
         val tags = TagUtils.getCustomTags(this).toMutableSet()
         keywordMap = tags.associateWith { it }.toMutableMap()
 
@@ -87,6 +89,8 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, NoteLogActivity::class.java)
             startActivity(intent)
         }
+
+
 
 
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
@@ -102,6 +106,11 @@ class MainActivity : AppCompatActivity() {
                 debounceButton()
                 toggleListening()
             }
+        }
+
+        calendarButton.setOnClickListener {
+            val intent = Intent(this, CalendarActivity::class.java)
+            startActivity(intent)
         }
 
         val manageTagsButton: Button = findViewById(R.id.manageTags)
