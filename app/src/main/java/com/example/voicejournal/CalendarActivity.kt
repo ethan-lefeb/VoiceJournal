@@ -2,21 +2,17 @@ package com.example.voicejournal
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.CalendarView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.prolificinteractive.materialcalendarview.MaterialCalendarView
-import com.prolificinteractive.materialcalendarview.CalendarDay
-import com.prolificinteractive.materialcalendarview.OnDateSelectedListener
 import java.io.File
-import java.util.Calendar
-
-
+import java.util.*
 
 class CalendarActivity : AppCompatActivity() {
 
-    private lateinit var calendarView: MaterialCalendarView
+    private lateinit var calendarView: CalendarView
     private lateinit var notes: List<VoiceNote>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,33 +22,44 @@ class CalendarActivity : AppCompatActivity() {
         calendarView = findViewById(R.id.calendarView)
         notes = loadNotes()
 
-        val noteDates = notes.map {
-            val cal = CalendarDay.from(
-                Calendar.getInstance().apply {
-                    timeInMillis = it.timestamp
-                }
-            )
-            cal
-        }
-
-        calendarView.addDecorator(NoteDayDecorator(noteDates.toSet()))
-
-        calendarView.setOnDateChangedListener { _, date, _ ->
-            val millis = Calendar.getInstance().apply {
-                set(date.year, date.month - 1, date.day)
+        calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
+            // Create calendar instance for the selected date (start of day)
+            val startOfDay = Calendar.getInstance().apply {
+                set(year, month, dayOfMonth, 0, 0, 0)
+                set(Calendar.MILLISECOND, 0)
             }.timeInMillis
-            val filteredNotes = notes.filter {
-                val dayStart = millis
-                val dayEnd = dayStart + 86_400_000
-                it.timestamp in dayStart..dayEnd
+
+            // End of day (23:59:59.999)
+            val endOfDay = Calendar.getInstance().apply {
+                set(year, month, dayOfMonth, 23, 59, 59)
+                set(Calendar.MILLISECOND, 999)
+            }.timeInMillis
+
+            // Filter notes for the selected date
+            val filteredNotes = notes.filter { note ->
+                note.timestamp in startOfDay..endOfDay
+            }
+
+            println("Debug: Selected date: $year-${month+1}-$dayOfMonth")
+            println("Debug: Start of day: $startOfDay")
+            println("Debug: End of day: $endOfDay")
+            println("Debug: Found ${filteredNotes.size} notes")
+            filteredNotes.forEach { note ->
+                val noteDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                    .format(java.util.Date(note.timestamp))
+                println("Debug: Note timestamp: ${note.timestamp} ($noteDate)")
             }
 
             if (filteredNotes.isNotEmpty()) {
                 val intent = Intent(this, NoteLogActivity::class.java)
-                intent.putExtra("selectedDate", millis)
+                intent.putExtra("selectedDate", startOfDay)
                 startActivity(intent)
             } else {
-                Toast.makeText(this, "No notes for this date (this functionality is not complete yet!)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "No notes for ${month + 1}/${dayOfMonth}/${year}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -67,4 +74,3 @@ class CalendarActivity : AppCompatActivity() {
         return emptyList()
     }
 }
-

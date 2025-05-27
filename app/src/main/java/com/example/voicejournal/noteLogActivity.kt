@@ -26,10 +26,17 @@ class NoteLogActivity : AppCompatActivity() {
         listView = findViewById(R.id.noteListView)
         notes = loadNotes().toMutableList()
 
+        val selectedDate = intent.getLongExtra("selectedDate", -1)
+        val displayNotes = if (selectedDate != -1L) {
+            filterNotesByDate(notes, selectedDate)
+        } else {
+            notes
+        }
+
         adapter = ArrayAdapter(
             this,
             android.R.layout.simple_list_item_1,
-            notes.map { formatNote(it) }.toMutableList()
+            displayNotes.map { formatNote(it) }.toMutableList()
         )
         listView.adapter = adapter
 

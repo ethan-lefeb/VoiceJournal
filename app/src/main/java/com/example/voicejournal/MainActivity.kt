@@ -28,6 +28,7 @@ import java.io.File
 import com.example.voicejournal.TagUtils
 
 
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var statusTextView: TextView
@@ -400,10 +401,10 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                prepareRecognizer()
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                Toast.makeText(this, "Microphone permission granted.", Toast.LENGTH_SHORT).show()
             } else {
-                statusTextView.text = "Permission denied."
+                Toast.makeText(this, "Microphone permission is required for speech recognition.", Toast.LENGTH_LONG).show()
                 recordButton.isEnabled = false
             }
         }
