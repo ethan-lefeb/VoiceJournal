@@ -45,7 +45,12 @@ class NoteLogActivity : AppCompatActivity() {
             true
         }
 
+        listView.setOnItemClickListener { _, _, position, _ ->
+            showEditDialog(position)
+        }
+
         val calendarButton: Button = findViewById(R.id.calendarButton)
+        val tagFilterButton: Button = findViewById(R.id.tagFilterButton)
         val clearFilterButton: Button = findViewById(R.id.clearFilterButton)
 
         calendarButton.setOnClickListener {
@@ -59,6 +64,27 @@ class NoteLogActivity : AppCompatActivity() {
                 val filteredNotes = filterNotesByDate(notes, selectedDateMillis)
                 updateListView(filteredNotes)
             }
+        }
+
+        tagFilterButton.setOnClickListener {
+            val input = android.widget.EditText(this).apply {
+                hint = "Enter a tag or keyword"
+            }
+
+            AlertDialog.Builder(this)
+                .setTitle("Filter by Tag")
+                .setView(input)
+                .setPositiveButton("Search") { _, _ ->
+                    val keyword = input.text.toString().trim()
+                    if (keyword.isNotEmpty()) {
+                        val filteredNotes = filterNotesByTag(notes, keyword)
+                        updateListView(filteredNotes)
+                    } else {
+                        Toast.makeText(this, "Tag can't be empty.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
 
         clearFilterButton.setOnClickListener {
@@ -76,6 +102,40 @@ class NoteLogActivity : AppCompatActivity() {
         return emptyList()
     }
 
+    private fun showEditDialog(position: Int) {
+        val note = notes[position]
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_edit_note, null)
+        val inputText = dialogView.findViewById<android.widget.EditText>(R.id.editNoteText)
+        val inputTags = dialogView.findViewById<android.widget.EditText>(R.id.editNoteTags)
+
+        inputText.setText(note.text)
+        inputTags.setText(note.tags.joinToString(", "))
+
+        AlertDialog.Builder(this)
+            .setTitle("Edit Note")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val updatedText = inputText.text.toString().trim()
+                val updatedTags = inputTags.text.toString()
+                    .split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+
+                if (updatedText.isNotEmpty()) {
+                    notes[position] = note.copy(text = updatedText, tags = updatedTags)
+                    saveNotes()
+                    refreshListView()
+                    Toast.makeText(this, "Note updated", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Note text cannot be empty", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+
     private fun filterNotesByDate(notes: List<VoiceNote>, selectedDate: Long): List<VoiceNote> {
         val calendar = java.util.Calendar.getInstance().apply {
             timeInMillis = selectedDate
@@ -91,6 +151,16 @@ class NoteLogActivity : AppCompatActivity() {
             it.timestamp in startOfDay..endOfDay
         }
     }
+
+    private fun filterNotesByTag(notes: List<VoiceNote>, keyword: String): List<VoiceNote> {
+        val keywordMap = TagUtils.defaultKeywordMap + TagUtils.getKeywordMap(this)
+        val mappedTag = keywordMap[keyword.lowercase()] ?: keyword
+
+        return notes.filter { note ->
+            note.tags.any { it.equals(mappedTag, ignoreCase = true) }
+        }
+    }
+
 
     private fun updateListView(filteredNotes: List<VoiceNote>) {
         adapter.clear()

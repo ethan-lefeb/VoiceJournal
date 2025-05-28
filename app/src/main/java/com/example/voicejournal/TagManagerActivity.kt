@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import org.json.JSONObject
 import com.example.voicejournal.TagUtils
 
 
@@ -15,6 +16,7 @@ class TagManagerActivity : AppCompatActivity() {
     private lateinit var addButton: Button
     private lateinit var tagList: LinearLayout
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var triggerInput: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,40 +25,44 @@ class TagManagerActivity : AppCompatActivity() {
         sharedPreferences = getSharedPreferences("VoiceJournalPrefs", Context.MODE_PRIVATE)
 
         tagInput = findViewById(R.id.tag_input)
+        triggerInput = findViewById(R.id.trigger_input)
         addButton = findViewById(R.id.add_tag_button)
         tagList = findViewById(R.id.tag_list)
 
         addButton.setOnClickListener {
             val newTag = tagInput.text.toString().trim()
-            if (newTag.isNotEmpty()) {
-                val tags = getSavedTags().toMutableSet()
-                if (tags.add(newTag)) {
-                    saveTags(tags)
-                    renderTags(tags)
+            val triggerPhrase = triggerInput.text.toString().trim()
+            if (newTag.isNotEmpty() && triggerPhrase.isNotEmpty()) {
+                val tagMap = getTagTriggers()
+                if (!tagMap.containsKey(newTag)) {
+                    tagMap[newTag] = triggerPhrase
+                    saveTagTriggers(tagMap)
+                    renderTags(tagMap)
                     tagInput.text.clear()
+                    triggerInput.text.clear()
                 } else {
                     Toast.makeText(this, "Tag already exists.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
-        renderTags(getSavedTags())
+        renderTags(getTagTriggers())
     }
 
     override fun onResume() {
         super.onResume()
     }
 
-    private fun renderTags(tags: Set<String>) {
+    private fun renderTags(tags: Map<String, String>) {
         tagList.removeAllViews()
-        tags.sorted().forEach { tag ->
+        tags.toSortedMap().forEach { (tag, trigger) ->
             val tagView = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 setPadding(0, 10, 0, 10)
             }
 
             val tagText = TextView(this).apply {
-                text = tag
+                text = "$tag (\"$trigger\")"
                 textSize = 18f
                 layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
             }
@@ -64,10 +70,10 @@ class TagManagerActivity : AppCompatActivity() {
             val deleteButton = Button(this).apply {
                 text = "Delete"
                 setOnClickListener {
-                    val currentTags = TagUtils.getCustomTags(this@TagManagerActivity).toMutableSet()
-                    currentTags.remove(tag)
-                    TagUtils.saveCustomTags(this@TagManagerActivity, currentTags)
-                    renderTags(currentTags)
+                    val tagMap = getTagTriggers()
+                    tagMap.remove(tag)
+                    saveTagTriggers(tagMap)
+                    renderTags(tagMap)
                 }
             }
 
@@ -78,11 +84,18 @@ class TagManagerActivity : AppCompatActivity() {
     }
 
 
-    private fun getSavedTags(): Set<String> {
-        return sharedPreferences.getStringSet("custom_tags", emptySet()) ?: emptySet()
+    private fun getTagTriggers(): MutableMap<String, String> {
+        val jsonString = sharedPreferences.getString("tag_triggers", "{}")
+        val jsonObject = JSONObject(jsonString ?: "{}")
+        val result = mutableMapOf<String, String>()
+        for (key in jsonObject.keys()) {
+            result[key] = jsonObject.getString(key)
+        }
+        return result
     }
 
-    private fun saveTags(tags: Set<String>) {
-        sharedPreferences.edit().putStringSet("custom_tags", tags).apply()
+    private fun saveTagTriggers(tagMap: Map<String, String>) {
+        val jsonObject = JSONObject(tagMap)
+        sharedPreferences.edit().putString("tag_triggers", jsonObject.toString()).apply()
     }
 }

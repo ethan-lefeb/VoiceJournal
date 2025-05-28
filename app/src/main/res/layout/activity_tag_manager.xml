@@ -15,12 +15,20 @@
             android:hint="Enter new tag"
             android:minHeight="48dp" />
 
+        <EditText
+            android:id="@+id/trigger_input"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Trigger phrase (e.g., 'felt good')" />
+
         <Button
             android:id="@+id/add_tag_button"
             android:text="Add Tag"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
+
+
 
         <TextView
             android:text="Existing Tags:"

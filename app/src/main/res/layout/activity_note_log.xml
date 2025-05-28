@@ -3,25 +3,51 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="#FAFAFA">
 
-    <Button
-        android:id="@+id/calendarButton"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="📆 View by Date"
-        android:layout_margin="16dp"
-        />
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="12dp"
+        android:weightSum="3">
 
-    <Button
-        android:id="@+id/clearFilterButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Clear Filter" />
+
+        <Button
+            android:id="@+id/calendarButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:text="📆 By Date" />
+
+        <Button
+            android:id="@+id/tagFilterButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="🏷️ By Tag" />
+
+        <Button
+            android:id="@+id/clearFilterButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="Clear Filter" />
+    </LinearLayout>
 
     <ListView
         android:id="@+id/noteListView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#FFFFFF"
+        android:clipToPadding="false"
+        android:dividerHeight="8dp"
+        android:padding="4dp" />
 </LinearLayout>
