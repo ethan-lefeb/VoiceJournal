@@ -23,19 +23,14 @@ class CalendarActivity : AppCompatActivity() {
         notes = loadNotes()
 
         calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
-            // Create calendar instance for the selected date (start of day)
             val startOfDay = Calendar.getInstance().apply {
                 set(year, month, dayOfMonth, 0, 0, 0)
                 set(Calendar.MILLISECOND, 0)
             }.timeInMillis
-
-            // End of day (23:59:59.999)
             val endOfDay = Calendar.getInstance().apply {
                 set(year, month, dayOfMonth, 23, 59, 59)
                 set(Calendar.MILLISECOND, 999)
             }.timeInMillis
-
-            // Filter notes for the selected date
             val filteredNotes = notes.filter { note ->
                 note.timestamp in startOfDay..endOfDay
             }

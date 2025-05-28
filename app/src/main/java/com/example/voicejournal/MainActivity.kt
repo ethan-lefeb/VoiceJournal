@@ -122,14 +122,75 @@ class MainActivity : AppCompatActivity() {
 
         val fakeNoteButton = findViewById<Button>(R.id.fakeNoteButton)
         fakeNoteButton.setOnClickListener {
-            val fakeText = "Note to self: check Phineas' schedule and meet the deadline"
-            val fakeTags = detectTags(fakeText)
-            transcriptionTextView.text = fakeText
-            tagsTextView.text = if (fakeTags.isEmpty()) "Tags: None" else "Tags: ${fakeTags.joinToString(", ")}"
-            statusTextView.text = "Fake note created."
-            saveJournalEntry(fakeText, fakeTags)
-        }
+            val inputTextView = TextView(this).apply {
+                text = "Enter note text:"
+                textSize = 16f
+                setPadding(20, 20, 20, 10)
+            }
 
+            val inputEditText = android.widget.EditText(this).apply {
+                hint = "e.g. Meeting with Kenneth..."
+            }
+
+            val textInputLayout = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                setPadding(50, 20, 50, 10)
+                addView(inputTextView)
+                addView(inputEditText)
+            }
+
+            val textDialog = androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("New Text Note")
+                .setView(textInputLayout)
+                .setPositiveButton("Next") { _, _ ->
+                    val inputText = inputEditText.text.toString().trim()
+
+                    if (inputText.isEmpty()) {
+                        Toast.makeText(this, "Note cannot be empty.", Toast.LENGTH_SHORT).show()
+                        return@setPositiveButton
+                    }
+
+                    val detectedTags = detectTags(inputText)
+
+                    val tagInputEditText = android.widget.EditText(this).apply {
+                        hint = "Optional: enter custom tags (comma separated)"
+                    }
+
+                    val tagInputLayout = android.widget.LinearLayout(this).apply {
+                        orientation = android.widget.LinearLayout.VERTICAL
+                        setPadding(50, 20, 50, 10)
+                        addView(TextView(this@MainActivity).apply {
+                            text = "Detected tags: ${if (detectedTags.isEmpty()) "None" else detectedTags.joinToString(", ")}"
+                        })
+                        addView(tagInputEditText)
+                    }
+
+                    androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("Add Tags")
+                        .setView(tagInputLayout)
+                        .setPositiveButton("Save Note") { _, _ ->
+                            val customTags = tagInputEditText.text.toString()
+                                .split(",")
+                                .map { it.trim() }
+                                .filter { it.isNotEmpty() }
+                                .toSet()
+
+                            val finalTags = detectedTags + customTags
+
+                            transcriptionTextView.text = inputText
+                            tagsTextView.text = if (finalTags.isEmpty()) "Tags: None" else "Tags: ${finalTags.joinToString(", ")}"
+                            statusTextView.text = "Note saved."
+
+                            saveJournalEntry(inputText, finalTags)
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }
+                .setNegativeButton("Cancel", null)
+                .create()
+
+            textDialog.show()
+        }
         checkAndRequestPermission()
     }
 
