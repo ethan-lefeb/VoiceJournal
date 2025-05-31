@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">VoiceJournal</string>
+    <string name="signed_in_as">Signed in as: %1$s</string>
+    <string name="not_signed_in">Not signed in to Google Drive</string>
+    <string name="sign_in_cancelled">Sign-in failed or cancelled</string>
 </resources>

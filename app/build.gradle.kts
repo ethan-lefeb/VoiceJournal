@@ -18,6 +18,16 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Fix for duplicate META-INF files
+    packagingOptions {
+        pickFirst("META-INF/DEPENDENCIES")
+        pickFirst("META-INF/LICENSE")
+        pickFirst("META-INF/LICENSE.txt")
+        pickFirst("META-INF/NOTICE")
+        pickFirst("META-INF/NOTICE.txt")
+        pickFirst("META-INF/DEPENDENCIES.txt")
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -40,7 +50,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -49,13 +58,26 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.material)
+    implementation(libs.androidx.activity)
+
+    // UI Components
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
+
+    // JSON processing
     implementation("com.google.code.gson:gson:2.10.1")
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
+
+    // Google API dependencies
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0")
+    implementation("com.google.api-client:google-api-client-android:2.0.0")
+    implementation("com.google.api-client:google-api-client-jackson2:2.0.0")
+    implementation("com.google.http-client:google-http-client-gson:1.42.3")
+
+    // Test dependencies
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

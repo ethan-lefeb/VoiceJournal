@@ -16,6 +16,9 @@
         android:theme="@style/Theme.VoiceJournal"
         tools:targetApi="31">
         <activity
+            android:name=".CloudStorageActivity"
+            android:exported="false" />
+        <activity
             android:name=".TagManagerActivity"
             android:exported="false" />
         <activity android:name=".NoteLogActivity" />

@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
+import android.content.Intent
 
 class NoteLogActivity : AppCompatActivity() {
 
@@ -52,6 +53,7 @@ class NoteLogActivity : AppCompatActivity() {
         val calendarButton: Button = findViewById(R.id.calendarButton)
         val tagFilterButton: Button = findViewById(R.id.tagFilterButton)
         val clearFilterButton: Button = findViewById(R.id.clearFilterButton)
+        val cloudStorageButton: Button = findViewById(R.id.cloudStorageButton)
 
         calendarButton.setOnClickListener {
             val datePicker = MaterialDatePicker.Builder.datePicker()
@@ -64,6 +66,10 @@ class NoteLogActivity : AppCompatActivity() {
                 val filteredNotes = filterNotesByDate(notes, selectedDateMillis)
                 updateListView(filteredNotes)
             }
+        }
+
+        cloudStorageButton.setOnClickListener {
+            navigateToCloudStorage()
         }
 
         tagFilterButton.setOnClickListener {
@@ -161,6 +167,10 @@ class NoteLogActivity : AppCompatActivity() {
         }
     }
 
+    private fun navigateToCloudStorage() {
+        val intent = Intent(this, CloudStorageActivity::class.java)
+        startActivity(intent)
+    }
 
     private fun updateListView(filteredNotes: List<VoiceNote>) {
         adapter.clear()

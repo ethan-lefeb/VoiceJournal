@@ -11,6 +11,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
+import android.view.View
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -22,11 +24,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.util.Locale
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import java.io.File
-import com.example.voicejournal.TagUtils
-
 
 
 class MainActivity : AppCompatActivity() {
@@ -49,16 +46,26 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
 
     companion object {
-        private const val TAG = "VoiceJournalApp"
+        private const val TAG = "VoiceJournal"
         private const val REQUEST_RECORD_AUDIO_PERMISSION = 200
         private const val BUTTON_DEBOUNCE_DELAY = 500L
         private const val LONG_DELAY_BEFORE_LISTENING = 1000L
     }
-
-    private val gson = Gson()
-    private val journalFileName = "journal_entries.json"
-
+    private lateinit var voiceNoteManager: VoiceNoteManager
     private lateinit var keywordMap: MutableMap<String, String>
+
+    private lateinit var timerTextView: TextView
+    private var timerHandler: Handler = Handler(Looper.getMainLooper())
+    private var startTime: Long = 0L
+    private val timerRunnable = object : Runnable {
+        override fun run() {
+            val elapsedMillis = SystemClock.elapsedRealtime() - startTime
+            val seconds = (elapsedMillis / 1000) % 60
+            val minutes = (elapsedMillis / 1000) / 60
+            timerTextView.text = String.format("%02d:%02d", minutes, seconds)
+            timerHandler.postDelayed(this, 1000)
+        }
+    }
 
     private fun detectTags(text: String): Set<String> {
         return keywordMap.filter { (phrase, _) ->
@@ -66,12 +73,12 @@ class MainActivity : AppCompatActivity() {
         }.values.toSet()
     }
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.layout)
+        voiceNoteManager = VoiceNoteManager(this)
 
+        timerTextView = findViewById(R.id.recordingTimerTextView)
 
         statusTextView = findViewById(R.id.statusTextView)
         recordButton = findViewById(R.id.recordButton)
@@ -90,9 +97,6 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, NoteLogActivity::class.java)
             startActivity(intent)
         }
-
-
-
 
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             statusTextView.text = "Speech recognition not available."
@@ -181,7 +185,8 @@ class MainActivity : AppCompatActivity() {
                             tagsTextView.text = if (finalTags.isEmpty()) "Tags: None" else "Tags: ${finalTags.joinToString(", ")}"
                             statusTextView.text = "Note saved."
 
-                            saveJournalEntry(inputText, finalTags)
+                            // Use VoiceNoteManager instead of direct saveJournalEntry call
+                            saveNote(inputText, finalTags)
                         }
                         .setNegativeButton("Cancel", null)
                         .show()
@@ -194,8 +199,17 @@ class MainActivity : AppCompatActivity() {
         checkAndRequestPermission()
     }
 
+    private fun startTimer() {
+        startTime = SystemClock.elapsedRealtime()
+        timerTextView.visibility = View.VISIBLE
+        timerTextView.text = "00:00"
+        timerHandler.post(timerRunnable)
+    }
 
-
+    private fun stopTimer() {
+        timerHandler.removeCallbacks(timerRunnable)
+        timerTextView.visibility = View.GONE
+    }
 
     private fun setupRecognitionIntent() {
         recognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -245,8 +259,10 @@ class MainActivity : AppCompatActivity() {
     private fun toggleListening() {
         if (isListening) {
             stopListening()
+            stopTimer()
         } else {
             startListening()
+            startTimer()
         }
     }
 
@@ -297,8 +313,7 @@ class MainActivity : AppCompatActivity() {
         builder.setMessage("Do you want to save this note?\n\n\"$transcript\"")
 
         builder.setPositiveButton("Yes") { _, _ ->
-            saveJournalEntry(transcript, tags)
-            Toast.makeText(this, "Note saved.", Toast.LENGTH_SHORT).show()
+            saveNote(transcript, tags)
         }
 
         builder.setNegativeButton("No") { _, _ ->
@@ -307,6 +322,16 @@ class MainActivity : AppCompatActivity() {
 
         builder.setCancelable(true)
         builder.show()
+    }
+
+    // New helper class from VoiceNoteManager
+    private fun saveNote(text: String, tags: Set<String>) {
+        val success = voiceNoteManager.saveJournalEntry(text, tags)
+        if (success) {
+            Toast.makeText(this, "Note saved.", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Failed to save note.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun debounceButton() {
@@ -371,6 +396,7 @@ class MainActivity : AppCompatActivity() {
                 isListening = false
                 recordButton.text = "Start Listening"
                 releaseAudioFocus()
+                stopTimer()
                 cleanupRecognizer()
             }
 
@@ -422,32 +448,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveJournalEntry(text: String, tags: Set<String>) {
-        val voiceNote = VoiceNote(text, tags.toList(), System.currentTimeMillis())
-        val file = File(filesDir, journalFileName)
-
-        val existingNotes: MutableList<VoiceNote> = if (file.exists()) {
-            try {
-                val type = object : TypeToken<MutableList<VoiceNote>>() {}.type
-                gson.fromJson(file.readText(), type) ?: mutableListOf()
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to read existing journal entries: ${e.message}")
-                mutableListOf()
-            }
-        } else {
-            mutableListOf()
-        }
-
-        existingNotes.add(voiceNote)
-
-        try {
-            file.writeText(gson.toJson(existingNotes))
-            Log.d(TAG, "Journal entry saved.")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to save journal entry: ${e.message}")
-        }
-    }
-
     private fun checkAndRequestPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(
@@ -470,8 +470,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-
 
     override fun onPause() {
         super.onPause()
