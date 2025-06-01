@@ -3,22 +3,52 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="#000000"
-    android:padding="12dp">
+    android:background="@drawable/note_item_background"
+    android:padding="16dp"
+    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="4dp"
+    android:elevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/noteDate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Date Placeholder"
+            android:textColor="#E0E0E0"
+            android:textStyle="bold"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/noteTag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tag Placeholder"
+            android:textColor="#BB86FC"
+            android:textSize="12sp"
+            android:background="@drawable/tag_background"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:layout_marginStart="8dp"/>
+
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/noteDate"
-        android:layout_width="wrap_content"
+        android:id="@+id/notePreview"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Date Placeholder"
-        android:textStyle="bold"
-        android:textSize="16sp"/>
-
-    <TextView
-        android:id="@+id/noteTag"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Tag Placeholder"
+        android:text="Voice note preview..."
+        android:textColor="#B0B0B0"
         android:textSize="14sp"
-        android:layout_marginTop="4dp"/>
+        android:layout_marginTop="8dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:visibility="gone"/>
+
 </LinearLayout>

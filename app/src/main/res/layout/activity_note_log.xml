@@ -4,14 +4,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#000000">
+    android:background="#121212">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="16dp"
         android:weightSum="3">
 
         <Button
@@ -19,45 +19,62 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="4dp"
-            android:text="📆 By Date" />
+            android:layout_marginEnd="6dp"
+            android:text="📆 By Date"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#2D2D30"
+            android:textSize="12sp"
+            style="@style/Widget.MaterialComponents.Button" />
 
         <Button
             android:id="@+id/tagFilterButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:text="🏷️ By Tag" />
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
+            android:text="🏷️ By Tag"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#2D2D30"
+            android:textSize="12sp"
+            style="@style/Widget.MaterialComponents.Button" />
 
         <Button
             android:id="@+id/clearFilterButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:text="Clear Filter" />
+            android:layout_marginStart="6dp"
+            android:text="Clear Filter"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#424242"
+            android:textSize="12sp"
+            style="@style/Widget.MaterialComponents.Button" />
     </LinearLayout>
 
-    <!-- New Cloud Storage Button -->
     <Button
         android:id="@+id/cloudStorageButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="16dp"
         android:text="☁️ Cloud Storage"
         android:textColor="#FFFFFF"
-        android:backgroundTint="#2196F3" />
+        android:backgroundTint="#1976D2"
+        android:textSize="14sp"
+        android:paddingVertical="12dp"
+        style="@style/Widget.MaterialComponents.Button" />
 
     <ListView
         android:id="@+id/noteListView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#FFFFFF"
+        android:background="#1E1E1E"
         android:clipToPadding="false"
-        android:dividerHeight="8dp"
-        android:padding="4dp" />
+        android:divider="#2D2D30"
+        android:dividerHeight="1dp"
+        android:padding="8dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbarThumbVertical="@drawable/scrollbar_thumb" />
 
 </LinearLayout>
