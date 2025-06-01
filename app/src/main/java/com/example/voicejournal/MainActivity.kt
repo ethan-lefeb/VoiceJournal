@@ -25,7 +25,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.util.Locale
 
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var statusTextView: TextView
@@ -51,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         private const val BUTTON_DEBOUNCE_DELAY = 500L
         private const val LONG_DELAY_BEFORE_LISTENING = 1000L
     }
+
     private lateinit var voiceNoteManager: VoiceNoteManager
     private lateinit var keywordMap: MutableMap<String, String>
 
@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         val calendarButton = findViewById<Button>(R.id.calendarButton)
 
         val tags = TagUtils.getCustomTags(this).toMutableSet()
-        keywordMap = tags.associateWith { it }.toMutableMap()
+        keywordMap = TagUtils.getKeywordMap(this).toMutableMap()
 
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
 
@@ -164,7 +164,9 @@ class MainActivity : AppCompatActivity() {
                         orientation = android.widget.LinearLayout.VERTICAL
                         setPadding(50, 20, 50, 10)
                         addView(TextView(this@MainActivity).apply {
-                            text = "Detected tags: ${if (detectedTags.isEmpty()) "None" else detectedTags.joinToString(", ")}"
+                            text = "Detected tags: ${
+                                if (detectedTags.isEmpty()) "None" else detectedTags.joinToString(", ")
+                            }"
                         })
                         addView(tagInputEditText)
                     }
@@ -182,7 +184,9 @@ class MainActivity : AppCompatActivity() {
                             val finalTags = detectedTags + customTags
 
                             transcriptionTextView.text = inputText
-                            tagsTextView.text = if (finalTags.isEmpty()) "Tags: None" else "Tags: ${finalTags.joinToString(", ")}"
+                            tagsTextView.text = if (finalTags.isEmpty()) "Tags: None" else "Tags: ${
+                                finalTags.joinToString(", ")
+                            }"
                             statusTextView.text = "Note saved."
 
                             // Use VoiceNoteManager instead of direct saveJournalEntry call
@@ -213,11 +217,31 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecognitionIntent() {
         recognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
+
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000L)
+            putExtra(
+                RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,
+                5000L
+            )
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 2000L)
+            putExtra("android.speech.extra.DICTATION_MODE", true)
         }
+    }
+    // TODO: Currently, we've got a bug where (as far as I can tell) triggering more than two tags will prematurely end the recording.
+    // For obvious reasons, that should be fixed.
+
+    private fun stopRecordingCompletely() {
+        isListening = false
+        recordButton.text = "Start Listening"
+        releaseAudioFocus()
+        stopTimer()
     }
 
     private fun prepareRecognizer() {
@@ -230,9 +254,10 @@ class MainActivity : AppCompatActivity() {
                     recognitionListener = createRecognitionListener()
                 }
 
-                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(applicationContext).apply {
-                    setRecognitionListener(recognitionListener)
-                }
+                speechRecognizer =
+                    SpeechRecognizer.createSpeechRecognizer(applicationContext).apply {
+                        setRecognitionListener(recognitionListener)
+                    }
                 statusTextView.text = "Ready"
                 Log.d(TAG, "Speech recognizer created")
             } catch (e: Exception) {
@@ -300,10 +325,7 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping listening: ${e.message}")
         } finally {
-            isListening = false
-            recordButton.text = "Start Listening"
-            statusTextView.text = "Stopped"
-            releaseAudioFocus()
+            stopRecordingCompletely()
         }
     }
 
@@ -324,7 +346,6 @@ class MainActivity : AppCompatActivity() {
         builder.show()
     }
 
-    // New helper class from VoiceNoteManager
     private fun saveNote(text: String, tags: Set<String>) {
         val success = voiceNoteManager.saveJournalEntry(text, tags)
         if (success) {
@@ -355,7 +376,11 @@ class MainActivity : AppCompatActivity() {
             audioManager.requestAudioFocus(audioFocusRequest!!)
         } else {
             @Suppress("DEPRECATION")
-            audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            audioManager.requestAudioFocus(
+                null,
+                AudioManager.STREAM_VOICE_CALL,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+            )
         }
     }
 
@@ -370,9 +395,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun handleFinalTranscript(transcript: String) {
+        lastTranscription = transcript
+        transcriptionTextView.text = transcript
+
+        val tags = detectTags(transcript)
+        tagsTextView.text = if (tags.isEmpty()) "Tags: None" else "Tags: ${tags.joinToString(", ")}"
+
+        statusTextView.text = "Done"
+        confirmSaveDialog(transcript, tags)
+    }
+
     private fun createRecognitionListener(): RecognitionListener {
         return object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle) {
+            override fun onReadyForSpeech(params: Bundle?) {
                 statusTextView.text = "Listening..."
             }
 
@@ -380,7 +416,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onRmsChanged(rmsdB: Float) {}
 
-            override fun onBufferReceived(buffer: ByteArray) {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
 
             override fun onEndOfSpeech() {
                 statusTextView.text = "Processing..."
@@ -389,23 +425,34 @@ class MainActivity : AppCompatActivity() {
             override fun onError(error: Int) {
                 val message = when (error) {
                     SpeechRecognizer.ERROR_NO_MATCH -> "No speech recognized"
-                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No input detected"
+                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Recording timeout - processing what was captured"
+                    SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
+                    SpeechRecognizer.ERROR_NETWORK -> "Network error"
+                    SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
+                    SpeechRecognizer.ERROR_SERVER -> "Server error"
+                    SpeechRecognizer.ERROR_CLIENT -> "Client error"
+                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
                     else -> "Recognition error ($error)"
                 }
+
+                Log.d(TAG, "Recognition error: $message (code: $error)")
                 statusTextView.text = message
-                isListening = false
-                recordButton.text = "Start Listening"
-                releaseAudioFocus()
-                stopTimer()
-                cleanupRecognizer()
+                stopRecordingCompletely()
+                if (error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT && lastPartial.isNotEmpty()) {
+                    Log.d(TAG, "Timeout with partial text: '$lastPartial'")
+                    handleFinalTranscript(lastPartial)
+                } else {
+                    cleanupRecognizer()
+                }
             }
 
-            override fun onResults(results: Bundle) {
-                val matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+            override fun onResults(results: Bundle?) {
+                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val transcript = matches?.firstOrNull() ?: ""
 
                 Log.d(TAG, "All matches: $matches")
                 Log.d(TAG, "Selected transcript: '$transcript'")
+                stopRecordingCompletely()
 
                 if (transcript == lastPartial) {
                     Log.d(TAG, "Skipping save: final result same as partial")
@@ -415,79 +462,52 @@ class MainActivity : AppCompatActivity() {
                 if (transcript.isEmpty()) {
                     Log.d(TAG, "Skipping: empty transcript")
                     statusTextView.text = "No speech detected"
-                    isListening = false
-                    recordButton.text = "Start Listening"
-                    releaseAudioFocus()
                     return
                 }
 
-                lastTranscription = transcript
-                transcriptionTextView.text = transcript
-
-                val tags = detectTags(transcript)
-                tagsTextView.text = if (tags.isEmpty()) "Tags: None" else "Tags: ${tags.joinToString(", ")}"
-
-                statusTextView.text = "Done"
-                isListening = false
-                recordButton.text = "Start Listening"
-                releaseAudioFocus()
-
-                confirmSaveDialog(transcript, tags)
+                handleFinalTranscript(transcript)
             }
 
-            override fun onPartialResults(partials: Bundle) {
-                partials.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let { partial ->
-                    if (partial.isNotEmpty() && partial != lastPartial) {
-                        lastPartial = partial
-                        transcriptionTextView.text = partial
+            override fun onPartialResults(partials: Bundle?) {
+                partials?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                    ?.let { partial ->
+                        if (partial.isNotEmpty() && partial != lastPartial) {
+                            lastPartial = partial
+                            transcriptionTextView.text = partial
+                            Log.d(TAG, "Partial result: '$partial'")
+                        }
                     }
-                }
             }
 
-            override fun onEvent(eventType: Int, params: Bundle) {}
+            override fun onEvent(eventType: Int, params: Bundle?) {}
         }
     }
-
     private fun checkAndRequestPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(
-                this, arrayOf(Manifest.permission.RECORD_AUDIO),
+                this,
+                arrayOf(Manifest.permission.RECORD_AUDIO),
                 REQUEST_RECORD_AUDIO_PERMISSION
             )
-        } else {
-            prepareRecognizer()
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                Toast.makeText(this, "Microphone permission granted.", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Microphone permission is required for speech recognition.", Toast.LENGTH_LONG).show()
-                recordButton.isEnabled = false
+        when (requestCode) {
+            REQUEST_RECORD_AUDIO_PERMISSION -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "Audio permission granted", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Audio permission required for voice recording", Toast.LENGTH_LONG).show()
+                    recordButton.isEnabled = false
+                }
             }
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        stopListening()
-        cleanupRecognizer()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        handler.removeCallbacksAndMessages(null)
-        releaseAudioFocus()
-        cleanupRecognizer()
-        recognitionListener = null
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val updatedTags = TagUtils.getCustomTags(this)
-        keywordMap = updatedTags.associateWith { it }.toMutableMap()
     }
 }
